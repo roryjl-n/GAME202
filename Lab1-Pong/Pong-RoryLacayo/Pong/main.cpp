@@ -1,7 +1,7 @@
 /*
 Name: Rory Lacayo
 Course: Object Oriented Programing
-Prof: Majid 
+Prof: Majid Moghadam
 Title of Program: Game Programing
 Date: Jan/2020
 */
