@@ -22,7 +22,7 @@
     <ProjectGuid>{7289d189-c98e-4eeb-be3e-173ef1084f0a}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>Pong</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
     <ProjectName>Pong</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />

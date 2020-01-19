@@ -9,6 +9,8 @@ Date: Jan/2020
 //including this SDL Library into our program.
 #include "SDL.h"
 #include <cstdlib>
+#include <iostream>
+
 
 //defining the size of our game window.
 #define WINDOW_WIDTH 800
@@ -33,11 +35,14 @@ SDL_Event event;
 //Mouse coordinates
 int mouse_x, mouse_y;
 
-//Store x and y speeds of the ball and array to store two direction
+//Store x and y speeds of the two balls and array to store two direction
 int speed_x, speed_y;
 int direction[2] = { -1, 1 };
 
-//Collition detection function between two rectangular objects (Ball & PlayerPaddle/Ball & AIPaddle)
+int speedTwo_x, speedTwo_y;
+int directionTwo[2] = { -1, 1 };
+
+//Collition detection function between two rectangular objects (Balls & PlayerPaddle/Balls & AIPaddle)
 bool check_collision(SDL_Rect A, SDL_Rect B)
 {
 	//The sides of the rectangles
@@ -84,10 +89,10 @@ bool check_collision(SDL_Rect A, SDL_Rect B)
 
 void LoadGame()
 {
-	//
+	//Loads Game Window
 	SDL_Window *window;
 
-	//
+	//Draws Game Window
 	window = SDL_CreateWindow("Basic SDL Sprites",
 		SDL_WINDOWPOS_UNDEFINED,
 		SDL_WINDOWPOS_UNDEFINED,
@@ -97,7 +102,7 @@ void LoadGame()
 		return;
 	}
 
-	//
+	//Renders Game Window
 	renderer = SDL_CreateRenderer(window, -1, 0);
 	if (!renderer) {
 		return;
@@ -123,10 +128,11 @@ void LoadGame()
 
 	//Second Ball
 	BallTwo.x = 370;
-	BallTwo.y = 270;
+	BallTwo.y = 250;
 	BallTwo.w = 20;
 	BallTwo.h = 20;
 
+	//Middle Line
 	MiddleLine.x = 395;
 	MiddleLine.y = 8;
 	MiddleLine.w = 8;
@@ -135,6 +141,9 @@ void LoadGame()
 	//Initialize speed variables
 	speed_x = -1;
 	speed_y = -1;
+
+	speedTwo_x = 1;
+	speedTwo_y = 1;
 }
 
 /*
@@ -175,7 +184,7 @@ void Update()
 {
 	PlayerPaddle.y = mouse_y;
 
-	 //ball goes out on sides, left and right
+	 //balls go out on sides, left and right
 	//reset to centre of screen
 	if (Ball.x < 0 || Ball.x > WINDOW_WIDTH)
 	{
@@ -186,7 +195,16 @@ void Update()
 		speed_y = (rand() % 2 + 1) * direction[rand() % 2];
 	}
 
-	//check if the ball's position is above(y less than zero) the top wall or 
+	if (BallTwo.x < 0 || BallTwo.x > WINDOW_WIDTH)
+	{
+		BallTwo.x = WINDOW_WIDTH / 2;
+		BallTwo.y = WINDOW_HEIGHT / 2;
+		//this expression produces random numbers -1, -2, 1 and 2
+		speedTwo_x = (rand() % 2 + 1) * directionTwo[rand() % 2];
+		speedTwo_y = (rand() % 2 + 1) * directionTwo[rand() % 2];
+	}
+
+	//check if the balls's position is above(y less than zero) the top wall or 
 	// lower(y greater than WINDOW_HEIGHT) than the bottom wall.
 	//If so reverse the speed in the y direction
 	if (Ball.y < 0 || Ball.y > (WINDOW_HEIGHT - Ball.h))
@@ -194,20 +212,41 @@ void Update()
 		speed_y = -speed_y;
 	}
 
+	if (BallTwo.y < 0 || BallTwo.y >(WINDOW_HEIGHT - BallTwo.h))
+	{
+		speedTwo_y = -speedTwo_y;
+	}
+
 	//Alligns center of both the AI's paddle and the ball
 	AIPaddle.y = Ball.y - AIPaddle.h/2 + Ball.h/2;
 	
-	//Continually check if the Ball & PlayerPaddle/Ball & AIPaddle collide
+	
+	//Continually check if the Two Balls & PlayerPaddle/Two Balls & AIPaddle collide
 	if (check_collision(Ball, AIPaddle) || check_collision(Ball, PlayerPaddle))
 	{
 		speed_x = -speed_x;
 	}
+
+	if (check_collision(BallTwo, AIPaddle) || check_collision(BallTwo, PlayerPaddle))
+	{
+		speedTwo_x = -speedTwo_x;
+	}
+
+	//Two balls collision
+	if (check_collision(Ball, BallTwo) || check_collision(Ball, BallTwo))
+	{
+		speed_x = -speed_x;
+		speedTwo_x = -speedTwo_x;
+	}
 	
-	//Continually update the Ball's x and y position by the amount speed
+	//Continually update the Balls's x and y position by the amount speed
 	Ball.x += speed_x;
 	Ball.y += speed_y;
 
-	SDL_Delay(1);
+	BallTwo.x += speedTwo_x;
+	BallTwo.y += speedTwo_y;
+
+	SDL_Delay(2);
 }
 
 /*
@@ -221,16 +260,16 @@ void DrawScreen()
 
 	//Draw and color the background of the game
 	SDL_Rect background = { 0, 0, 800, 600 };
-	SDL_SetRenderDrawColor(renderer, 250, 250, 250, 250);
+	SDL_SetRenderDrawColor(renderer, 0, 0, 250, 1);
 	SDL_RenderFillRect(renderer, &background);
 
 	//Draw and color the player's paddle, AI's paddle, and the Middle Line
-	SDL_SetRenderDrawColor(renderer, 0, 0, 255, 1);
+	SDL_SetRenderDrawColor(renderer, 250, 250, 255, 250);
 	SDL_RenderFillRect(renderer, &PlayerPaddle);
 	SDL_RenderFillRect(renderer, &AIPaddle);
 	SDL_RenderFillRect(renderer, &MiddleLine);
 
-	//Draw and color the ball
+	//Draw and color the two balls
 	SDL_SetRenderDrawColor(renderer, 255, 0, 0, 1);
 	SDL_RenderFillRect(renderer, &Ball);
 	SDL_RenderFillRect(renderer, &BallTwo);
