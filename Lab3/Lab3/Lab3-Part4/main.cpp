@@ -11,17 +11,20 @@
 #define WINDOW_WIDTH    512
 #define WINDOW_HEIGHT   384
 #endif
-#define NUM_SPRITES     10
+#define NUM_SPRITES     4
 #define MAX_SPEED       1
 #define WW2 (WINDOW_WIDTH>>1)
 #define WH2 (WINDOW_HEIGHT>>1)
 
 static SDL_Texture *sprite;
+static SDL_Texture *sprite1; //ALIEN
+static SDL_Texture *sprite2; //CANNON
+static SDL_Texture *sprite3; //FIREBALL
+static SDL_Texture *sprite4; //CANNONBALL
 static SDL_Rect positions[NUM_SPRITES];
 static SDL_Rect velocities[NUM_SPRITES];
 static int sprite_w, sprite_h;
-SDL_Joystick *joy = NULL; //P1 Joystick
-SDL_Joystick *joy2 = NULL;//P2 Joysrick
+SDL_Joystick *joy = NULL;
 
 /* Call this instead of exit(), so we can clean up SDL: atexit() is evil. */
 static void
@@ -31,7 +34,7 @@ quit(int rc)
 }
 
 int
-LoadSprite(char *file, SDL_Renderer *renderer)
+LoadSprite(char *file, SDL_Renderer *renderer, SDL_Texture* &someSprite)
 {
 	SDL_Surface *temp;
 
@@ -72,8 +75,8 @@ LoadSprite(char *file, SDL_Renderer *renderer)
 	}
 
 	/* Create textures from the image */
-	sprite = SDL_CreateTextureFromSurface(renderer, temp);
-	if (!sprite)
+	someSprite = SDL_CreateTextureFromSurface(renderer, temp);
+	if (!someSprite)
 	{
 		fprintf(stderr, "Couldn't create texture: %s\n", SDL_GetError());
 		SDL_FreeSurface(temp);
@@ -86,7 +89,7 @@ LoadSprite(char *file, SDL_Renderer *renderer)
 }
 
 void
-MoveSprites(SDL_Window * window, SDL_Renderer * renderer, SDL_Texture * sprite)
+MoveSprites(SDL_Window * window, SDL_Renderer * renderer)
 {
 	int i;
 	int window_w = WINDOW_WIDTH;
@@ -119,7 +122,22 @@ MoveSprites(SDL_Window * window, SDL_Renderer * renderer, SDL_Texture * sprite)
 			}
 		}
 		/* Blit the sprite onto the screen */
-		SDL_RenderCopy(renderer, sprite, NULL, position);
+		if (i == 0)
+		{
+			SDL_RenderCopy(renderer, sprite1, NULL, position);
+		}
+		else if (i == 1)
+		{
+			SDL_RenderCopy(renderer, sprite2, NULL, position);
+		}
+		else if (i == 2)
+		{
+			SDL_RenderCopy(renderer, sprite3, NULL, position);
+		}
+		else if (i == 3)
+		{
+			SDL_RenderCopy(renderer, sprite4, NULL, position);
+		}
 	}
 
 	/* Update the screen! */
@@ -147,7 +165,19 @@ main(int argc, char *argv[])
 		quit(2);
 	}
 
-	if (LoadSprite("hts.bmp", renderer) < 0)
+	if (LoadSprite("alien.bmp", renderer, sprite1) < 0)
+	{
+		quit(2);
+	}
+	if (LoadSprite("cannon.bmp", renderer, sprite2) < 0)
+	{
+		quit(2);
+	}
+	if (LoadSprite("fireball.bmp", renderer, sprite3) < 0)
+	{
+		quit(2);
+	}
+	if (LoadSprite("cannonball.bmp", renderer, sprite4) < 0)
 	{
 		quit(2);
 	}
@@ -156,11 +186,9 @@ main(int argc, char *argv[])
 	if (SDL_NumJoysticks() > 0)
 	{
 		joy = SDL_JoystickOpen(0);
+
 	}
-	if (SDL_NumJoysticks() > 1)
-	{
-		joy2 = SDL_JoystickOpen(1);
-	}
+
 	/* Initialize the sprite positions */
 	srand(time(NULL));
 	for (i = 0; i < NUM_SPRITES; ++i)
@@ -207,23 +235,25 @@ main(int argc, char *argv[])
 					done = 1;
 				}
 				break;
-			
-				case SDL_JOYAXISMOTION: //Prints the x and y coordinates
-					if (event.jaxis.axis == 0)
-					{
-						printf("x = %d\n", event.jaxis.value);
-				    }
-					else if (event.jaxis.axis == 1)
-					{
-						printf("y = %d\n", event.jaxis.value);
-					}
+
+			case SDL_JOYAXISMOTION: //Prints the x and y coordinates
+				if (event.jaxis.axis == 0)
+				{
+					printf("x = %d\n", event.jaxis.value);
+				}
+				else if (event.jaxis.axis == 1)
+				{
+					printf("y = %d\n", event.jaxis.value);
+				}
+
+
 
 				break;
-				
+
 			}
 
 		}
-		if (joy) //P1 Joystick control fo image [0]
+		if (joy) //P1 Joystick control for image [0]
 		{
 
 			positions[0].x += SDL_JoystickGetAxis(joy, 0) / 6000;
@@ -237,28 +267,11 @@ main(int argc, char *argv[])
 			if (positions[0].y < 0)
 				positions[0].y = 0;
 
-			
+
 
 		}
-		if (joy2) //P2 Joystick control for image [1]
-		{
-
-			positions[1].x += SDL_JoystickGetAxis(joy2, 0) / 6000;
-			positions[1].y += SDL_JoystickGetAxis(joy2, 1) / 6000;
-			if (positions[1].x > WINDOW_WIDTH - sprite_w)
-				positions[1].x = WINDOW_WIDTH - sprite_w;
-			if (positions[1].x < 0)
-				positions[1].x = 0;
-			if (positions[1].y > WINDOW_HEIGHT - sprite_h)
-				positions[1].y = WINDOW_HEIGHT - sprite_h;
-			if (positions[1].y < 0)
-				positions[1].y = 0;
-
-			
-
-		}
-
-		MoveSprites(window, renderer, sprite);
+	
+		MoveSprites(window, renderer);
 		SDL_Delay(10);
 	}
 
