@@ -8,15 +8,14 @@
 #define WINDOW_WIDTH    256
 #define WINDOW_HEIGHT   (2*192)
 #else
-#define WINDOW_WIDTH    512
-#define WINDOW_HEIGHT   384
+#define WINDOW_WIDTH    1200
+#define WINDOW_HEIGHT   800
 #endif
 #define NUM_SPRITES     4
 #define MAX_SPEED       1
 #define WW2 (WINDOW_WIDTH>>1)
 #define WH2 (WINDOW_HEIGHT>>1)
 
-static SDL_Texture *sprite;
 static SDL_Texture *sprite1; //ALIEN
 static SDL_Texture *sprite2; //CANNON
 static SDL_Texture *sprite3; //FIREBALL
@@ -108,18 +107,7 @@ MoveSprites(SDL_Window * window, SDL_Renderer * renderer)
 		velocity = &velocities[i];
 		if (i != 0)
 		{
-			position->x += velocity->x;
-			if ((position->x < 0) || (position->x >= (window_w - sprite_w)))
-			{
-				velocity->x = -velocity->x;
-				position->x += velocity->x;
-			}
-			position->y += velocity->y;
-			if ((position->y < 0) || (position->y >= (window_h - sprite_h)))
-			{
-				velocity->y = -velocity->y;
-				position->y += velocity->y;
-			}
+			//if(  )
 		}
 		/* Blit the sprite onto the screen */
 		if (i == 0)
@@ -132,10 +120,12 @@ MoveSprites(SDL_Window * window, SDL_Renderer * renderer)
 		}
 		else if (i == 2)
 		{
+			positions[2].x += 5;
 			SDL_RenderCopy(renderer, sprite3, NULL, position);
 		}
 		else if (i == 3)
 		{
+			positions[3].x -= 5;
 			SDL_RenderCopy(renderer, sprite4, NULL, position);
 		}
 	}
@@ -165,45 +155,46 @@ main(int argc, char *argv[])
 		quit(2);
 	}
 
+	//We load all 4 sprites and set their initial position.
 	if (LoadSprite("alien.bmp", renderer, sprite1) < 0)
 	{
-		quit(2);
+		return false;
 	}
+
+	positions[0].x = 0;
+	positions[0].y = WINDOW_HEIGHT/2 - sprite_h/2;
+	positions[0].w = sprite_w;
+	positions[0].h = sprite_h;
+	velocities[0].x = 0;
+	velocities[0].y = 0;
+
 	if (LoadSprite("cannon.bmp", renderer, sprite2) < 0)
 	{
-		quit(2);
+		return false;
 	}
+
+	positions[1].x = WINDOW_WIDTH - sprite_w;
+	positions[1].y = WINDOW_HEIGHT / 2 - sprite_h / 2;
+	positions[1].w = sprite_w;
+	positions[1].h = sprite_h;
+	velocities[1].x = 0;
+	velocities[1].y = 0;
+
 	if (LoadSprite("fireball.bmp", renderer, sprite3) < 0)
 	{
-		quit(2);
+		return false;
 	}
+
 	if (LoadSprite("cannonball.bmp", renderer, sprite4) < 0)
 	{
-		quit(2);
+		return false;
 	}
+
 	SDL_InitSubSystem(SDL_INIT_JOYSTICK);
 
 	if (SDL_NumJoysticks() > 0)
 	{
 		joy = SDL_JoystickOpen(0);
-
-	}
-
-	/* Initialize the sprite positions */
-	srand(time(NULL));
-	for (i = 0; i < NUM_SPRITES; ++i)
-	{
-		positions[i].x = rand() % (WINDOW_WIDTH - sprite_w);
-		positions[i].y = rand() % (WINDOW_HEIGHT - sprite_h);
-		positions[i].w = sprite_w;
-		positions[i].h = sprite_h;
-		velocities[i].x = 0;
-		velocities[i].y = 0;
-		while (!velocities[i].x && !velocities[i].y)
-		{
-			velocities[i].x = (rand() % (MAX_SPEED * 2 + 1)) - MAX_SPEED;
-			velocities[i].y = (rand() % (MAX_SPEED * 2 + 1)) - MAX_SPEED;
-		}
 	}
 
 	/* Main render loop */
@@ -215,60 +206,57 @@ main(int argc, char *argv[])
 		{
 			switch (event.type)
 			{
-			case SDL_QUIT:
-			case SDL_KEYDOWN:
+			 case SDL_QUIT:
+			 case SDL_KEYDOWN:
 				done = 1;
 				break;
-			case SDL_JOYDEVICEREMOVED:
-				printf("BYE-BYE JOYSTICK");
-				printf("Joy number %d\n", event.jdevice.which);
-			case SDL_JOYBUTTONDOWN:
-				printf("Joy number %d\n", event.jbutton.which);//prints the joystick we are using to press the buttons
-				printf("Button %d\n", event.jbutton.button); //prints the joystick button pressed
-				if (event.jbutton.which == 0 && event.jbutton.button == 0) // Button 0 on 1st Joystick
+			 case SDL_JOYBUTTONDOWN:
+				if (event.jbutton.which == 0 && event.jbutton.button == 0) // Button 0 on Joystick will make image[2] spawn wherever image[0]
 				{
-					positions[0].x = 0;
-					positions[0].y = 0;
+					positions[2].x = positions[0].x + 60;
+					positions[2].y = positions[0].y + sprite_h;
+					positions[2].w = sprite_w;
+					positions[2].h = sprite_h;
+					velocities[2].x = 0;
+					velocities[2].y = 0;
 				}
-				else if (event.jbutton.which == 0 && event.jbutton.button == 1)  // Button 1 on 1st Joystick
+				else if (event.jbutton.which == 0 && event.jbutton.button == 1)  // Button 1 on Joystick
 				{
 					done = 1;
 				}
 				break;
-
-			case SDL_JOYAXISMOTION: //Prints the x and y coordinates
-				if (event.jaxis.axis == 0)
-				{
-					printf("x = %d\n", event.jaxis.value);
-				}
-				else if (event.jaxis.axis == 1)
-				{
-					printf("y = %d\n", event.jaxis.value);
-				}
-
-
-
-				break;
-
+			 case SDL_MOUSEMOTION: //mouse control for image [1] and locked in y position
+				 positions[1].y = event.motion.y;
+				 if (positions[1].y + sprite_h > WINDOW_HEIGHT)
+				 {
+					 positions[1].y = WINDOW_HEIGHT - sprite_h;
+				 }
+				 break;
+			 case SDL_MOUSEBUTTONDOWN: //left click on mouse will make image[3] spawn wherever image[1] is
+				 if (SDL_BUTTON_LEFT)
+				 {
+					 positions[3].x = positions[1].x - 25;
+					 positions[3].y = positions[1].y;
+					 positions[3].w = sprite_w;
+					 positions[3].h = sprite_h;
+					 velocities[3].x = 5;
+					 velocities[3].y = 0;
+				 }
+				 else if (SDL_BUTTON_RIGHT)
+				 {
+					 done = 1;
+				 }
 			}
 
 		}
-		if (joy) //P1 Joystick control for image [0]
+		if (joy) //Joystick control for image [0] and locked in y position
 		{
-
-			positions[0].x += SDL_JoystickGetAxis(joy, 0) / 6000;
 			positions[0].y += SDL_JoystickGetAxis(joy, 1) / 6000;
-			if (positions[0].x > WINDOW_WIDTH - sprite_w)
-				positions[0].x = WINDOW_WIDTH - sprite_w;
-			if (positions[0].x < 0)
-				positions[0].x = 0;
+	
 			if (positions[0].y > WINDOW_HEIGHT - sprite_h)
 				positions[0].y = WINDOW_HEIGHT - sprite_h;
 			if (positions[0].y < 0)
 				positions[0].y = 0;
-
-
-
 		}
 	
 		MoveSprites(window, renderer);
